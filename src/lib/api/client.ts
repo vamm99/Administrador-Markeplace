@@ -3,9 +3,9 @@
 import { ApiError } from '@/lib/types/api';
 
 // URL base de tu API NestJS
-// Por defecto usa localhost:3006 (puerto común de NestJS)
+// Por defecto usa localhost:3005 (puerto del backend)
 // Puedes configurarlo en .env.local con NEXT_PUBLIC_API_URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
 
 /**
  * Cliente API genérico para hacer peticiones HTTP

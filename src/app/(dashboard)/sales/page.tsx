@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Sale, SaleFilters } from '@/lib/types/sale';
 import { getSalesAction, getSalesForExportAction } from '@/app/actions/sales';
 import { SalesTable } from '@/components/sales/sales-table';
@@ -20,6 +20,23 @@ import { Download, DollarSign, ShoppingCart, CheckCircle, Clock, RefreshCw } fro
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
+// Hook personalizado para debouncing
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,9 +54,12 @@ export default function SalesPage() {
     totalRevenue: 0,
   });
 
-  const loadSales = async () => {
+  // Memoizar los filtros para evitar re-renders innecesarios
+  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)]);
+
+  const loadSales = useCallback(async () => {
     setLoading(true);
-    const result = await getSalesAction(page, 10, filters);
+    const result = await getSalesAction(page, 10, memoizedFilters);
 
     if (result.success && result.data) {
       setSales(result.data.data || []);
@@ -58,11 +78,11 @@ export default function SalesPage() {
       toast.error(result.error || 'Error al cargar ventas');
     }
     setLoading(false);
-  };
+  }, [page, memoizedFilters]);
 
   useEffect(() => {
     loadSales();
-  }, [page, filters]);
+  }, [loadSales]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -204,10 +224,10 @@ export default function SalesPage() {
               <Select
                 value={filters.status || 'all'}
                 onValueChange={(value) =>
-                  setFilters({
-                    ...filters,
+                  setFilters(prev => ({
+                    ...prev,
                     status: value === 'all' ? undefined : (value as any),
-                  })
+                  }))
                 }
               >
                 <SelectTrigger>
@@ -228,7 +248,7 @@ export default function SalesPage() {
                 type="date"
                 value={filters.startDate || ''}
                 onChange={(e) =>
-                  setFilters({ ...filters, startDate: e.target.value })
+                  setFilters(prev => ({ ...prev, startDate: e.target.value }))
                 }
               />
             </div>
@@ -240,7 +260,7 @@ export default function SalesPage() {
                 type="date"
                 value={filters.endDate || ''}
                 onChange={(e) =>
-                  setFilters({ ...filters, endDate: e.target.value })
+                  setFilters(prev => ({ ...prev, endDate: e.target.value }))
                 }
               />
             </div>

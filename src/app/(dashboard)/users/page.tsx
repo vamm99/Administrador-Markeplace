@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, UserFilters, UserRole } from '@/lib/types/user';
 import { getUsersAction, getUserStatsAction } from '@/app/actions/users';
 import { UsersTable } from '@/components/users/users-table';
@@ -18,6 +18,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Users, UserCheck, UserX, RefreshCw } from 'lucide-react';
 import { RoleGuard } from '@/components/auth/role-guard';
 
+// Hook personalizado para debouncing
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 function UsersPageContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +42,7 @@ function UsersPageContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState<UserFilters>({});
+  const [searchValue, setSearchValue] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [stats, setStats] = useState({
@@ -33,9 +51,15 @@ function UsersPageContent() {
     inactive: 0,
   });
 
-  const loadUsers = async () => {
+  // Debounce search value to avoid excessive API calls
+  const debouncedSearch = useDebounce(searchValue, 500);
+
+  // Memoizar los filtros para evitar re-renders innecesarios
+  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)]);
+
+  const loadUsers = useCallback(async () => {
     setLoading(true);
-    const result = await getUsersAction(page, 10, filters);
+    const result = await getUsersAction(page, 10, memoizedFilters);
 
     if (result.success && result.data) {
       setUsers(result.data.data || []);
@@ -45,46 +69,57 @@ function UsersPageContent() {
       alert(result.error || 'Error al cargar usuarios');
     }
     setLoading(false);
-  };
+  }, [page, memoizedFilters]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     const result = await getUserStatsAction();
     if (result.success && result.data) {
       setStats(result.data.data);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUsers();
     loadStats();
-  }, [page, filters]);
+  }, [loadUsers, loadStats]);
 
-  const handleSearch = (search: string) => {
-    setFilters({ ...filters, search });
-    setPage(1);
-  };
+  // Effect for debounced search
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      setFilters(prev => ({ ...prev, search: debouncedSearch }));
+      setPage(1);
+    }
+  }, [debouncedSearch, filters.search]);
 
-  const handleRoleFilter = (role: string) => {
+  const handleSearch = useCallback((search: string) => {
+    setSearchValue(search);
+  }, []);
+
+  const handleRoleFilter = useCallback((role: string) => {
     // Si es "all", remover el filtro de rol
     if (role === 'all') {
-      const { role: _, ...restFilters } = filters;
-      setFilters(restFilters);
+      setFilters(prev => {
+        const { role: _, ...rest } = prev;
+        return rest;
+      });
     } else {
-      setFilters({ ...filters, role: role as UserRole });
+      setFilters(prev => ({ ...prev, role: role as UserRole }));
     }
     setPage(1);
-  };
+  }, []);
 
-  const handleStatusFilter = (status: string) => {
+  const handleStatusFilter = useCallback((status: string) => {
     // Si es "all", remover el filtro de estado
     if (status === 'all') {
-      const { status: _, ...restFilters } = filters;
-      setFilters(restFilters);
+      setFilters(prev => {
+        const { status: _, ...rest } = prev;
+        return rest;
+      });
     } else {
-      setFilters({ ...filters, status });
+      setFilters(prev => ({ ...prev, status }));
     }
     setPage(1);
-  };
+  }, []);
 
   const handleEdit = (user: User) => {
     setSelectedUser(user);
@@ -166,7 +201,8 @@ function UsersPageContent() {
                 <Input
                   placeholder="Buscar por nombre, email o documento..."
                   className="pl-10"
-                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
                 />
               </div>
             </div>

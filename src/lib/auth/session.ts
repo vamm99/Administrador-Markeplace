@@ -56,6 +56,22 @@ export async function getUserData(): Promise<User | null> {
 }
 
 /**
+ * Actualiza solo los datos del usuario en las cookies (mantiene el token)
+ */
+export async function updateUserData(user: Partial<User>) {
+  const cookieStore = await cookies();
+  
+  // Actualizar datos del usuario en cookie
+  cookieStore.set(USER_COOKIE_NAME, JSON.stringify(user), {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7, // 7 días
+    path: '/',
+  });
+}
+
+/**
  * Elimina la sesión (logout)
  */
 export async function clearSession() {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Category, CategoryFilters } from '@/lib/types/category';
 import { getCategoriesAction } from '@/app/actions/categories';
 import { CategoriesTable } from '@/components/categories/categories-table';
@@ -11,16 +11,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, FolderOpen, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Hook personalizado para debouncing
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<CategoryFilters>({});
+  const [searchValue, setSearchValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  const loadCategories = async () => {
+  // Debounce search value to avoid excessive API calls
+  const debouncedSearch = useDebounce(searchValue, 500);
+
+  // Memoizar los filtros para evitar re-renders innecesarios
+  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)]);
+
+  const loadCategories = useCallback(async () => {
     setLoading(true);
-    const result = await getCategoriesAction(1, 100, filters);
+    const result = await getCategoriesAction(1, 100, memoizedFilters);
 
     if (result.success && result.data) {
       setCategories(result.data.data || []);
@@ -28,15 +52,22 @@ export default function CategoriesPage() {
       toast.error(result.error || 'Error al cargar categorías');
     }
     setLoading(false);
-  };
+  }, [memoizedFilters]);
 
   useEffect(() => {
     loadCategories();
-  }, [filters]);
+  }, [loadCategories]);
 
-  const handleSearch = (search: string) => {
-    setFilters({ ...filters, search });
-  };
+  // Effect for debounced search
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      setFilters(prev => ({ ...prev, search: debouncedSearch }));
+    }
+  }, [debouncedSearch, filters.search]);
+
+  const handleSearch = useCallback((search: string) => {
+    setSearchValue(search);
+  }, []);
 
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
@@ -97,7 +128,8 @@ export default function CategoriesPage() {
                 <Input
                   placeholder="Buscar categorías por nombre..."
                   className="pl-10"
-                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
                 />
               </div>
             </div>

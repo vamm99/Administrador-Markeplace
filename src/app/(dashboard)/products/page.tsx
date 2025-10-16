@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Product, ProductFilters } from '@/lib/types/product';
 import { getProductsAction } from '@/app/actions/products';
 import { ProductsTable } from '@/components/products/products-table';
@@ -18,6 +18,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Package, PackageCheck, PackageX, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Hook personalizado para debouncing
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +42,7 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState<ProductFilters>({});
+  const [searchValue, setSearchValue] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [stats, setStats] = useState({
@@ -34,7 +52,10 @@ export default function ProductsPage() {
     lowStock: 0,
   });
 
-  const loadProducts = async () => {
+  // Debounce search value to avoid excessive API calls
+  const debouncedSearch = useDebounce(searchValue, 500);
+
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     const result = await getProductsAction(page, 10, filters);
 
@@ -55,26 +76,35 @@ export default function ProductsPage() {
       toast.error(result.error || 'Error al cargar productos');
     }
     setLoading(false);
-  };
+  }, [page, filters.search, filters.status, filters.category_id, filters.minPrice, filters.maxPrice]);
 
   useEffect(() => {
     loadProducts();
-  }, [page, filters]);
+  }, [loadProducts]);
 
-  const handleSearch = (search: string) => {
-    setFilters({ ...filters, search });
-    setPage(1);
-  };
+  // Effect for debounced search
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      setFilters(prev => ({ ...prev, search: debouncedSearch }));
+      setPage(1);
+    }
+  }, [debouncedSearch, filters.search]);
 
-  const handleStatusFilter = (status: string) => {
+  const handleSearch = useCallback((search: string) => {
+    setSearchValue(search);
+  }, []);
+
+  const handleStatusFilter = useCallback((status: string) => {
     if (status === 'all') {
-      const { status: _, ...restFilters } = filters;
-      setFilters(restFilters);
+      setFilters(prev => {
+        const { status: _, ...rest } = prev;
+        return rest;
+      });
     } else {
-      setFilters({ ...filters, status });
+      setFilters(prev => ({ ...prev, status }));
     }
     setPage(1);
-  };
+  }, []);
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
@@ -165,6 +195,7 @@ export default function ProductsPage() {
                 <Input
                   placeholder="Buscar productos por nombre o descripción..."
                   className="pl-10"
+                  value={searchValue}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>

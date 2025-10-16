@@ -4,7 +4,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { apiGet, apiPut } from '@/lib/api/client';
-import { getSession, getUserData } from '@/lib/auth/session';
+import { getSession, getUserData, updateUserData } from '@/lib/auth/session';
 import { ActionResult } from '@/lib/types/api';
 import { User as UserType, UpdateUserData, UserResponse } from '@/lib/types/user';
 
@@ -84,6 +84,9 @@ export async function updateProfileAction(
       userData,
       token
     );
+
+    // Actualizar los datos del usuario en las cookies
+    await updateUserData(response.data);
 
     // Revalidar el perfil
     revalidatePath('/profile');

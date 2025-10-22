@@ -56,26 +56,26 @@ export function CategoryForm({ category, open, onClose, onSuccess }: CategoryFor
         const result = await updateCategoryAction(category._id, updateData);
 
         if (result.success) {
-          toast.success('Categoría actualizada exitosamente');
+          toast.success('¡Categoría actualizada exitosamente!');
           onSuccess();
           onClose();
         } else {
-          toast.error(result.error || 'Error al actualizar categoría');
+          toast.error(result.error || 'No se pudo actualizar la categoría. Inténtalo nuevamente.');
         }
       } else {
         // Crear categoría
         const result = await createCategoryAction(formData);
 
         if (result.success) {
-          toast.success('Categoría creada exitosamente');
+          toast.success('¡Categoría creada exitosamente!');
           onSuccess();
           onClose();
         } else {
-          toast.error(result.error || 'Error al crear categoría');
+          toast.error(result.error || 'No se pudo crear la categoría. Inténtalo nuevamente.');
         }
       }
     } catch (error) {
-      toast.error('Error inesperado');
+      toast.error('Error inesperado. Por favor intenta de nuevo.');
       console.error(error);
     } finally {
       setLoading(false);

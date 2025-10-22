@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Users, UserCheck, UserX, RefreshCw } from 'lucide-react';
 import { RoleGuard } from '@/components/auth/role-guard';
+import { toast } from 'sonner';
 
 // Hook personalizado para debouncing
 function useDebounce(value: string, delay: number) {
@@ -66,7 +67,7 @@ function UsersPageContent() {
       setTotalPages(result.data.meta?.totalPages || 1);
       setTotal(result.data.meta?.total || 0);
     } else {
-      alert(result.error || 'Error al cargar usuarios');
+      toast.error(result.error || 'No se pudieron cargar los usuarios. Inténtalo nuevamente.');
     }
     setLoading(false);
   }, [page, memoizedFilters]);

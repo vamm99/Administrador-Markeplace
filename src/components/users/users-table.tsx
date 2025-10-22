@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, UserX } from 'lucide-react';
 import { deactivateUserAction, deleteUserAction } from '@/app/actions/users';
+import { toast } from 'sonner';
 
 interface UsersTableProps {
   users: User[];
@@ -25,31 +26,31 @@ export function UsersTable({ users, onEdit, onRefresh }: UsersTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleDeactivate = async (userId: string) => {
-    if (!confirm('¿Estás seguro de desactivar este usuario?')) return;
+    if (!confirm('¿Estás seguro de que deseas desactivar este usuario?')) return;
 
     setLoading(userId);
     const result = await deactivateUserAction(userId);
 
     if (result.success) {
-      alert('Usuario desactivado exitosamente');
+      toast.success('¡Usuario desactivado exitosamente!');
       onRefresh();
     } else {
-      alert(result.error || 'Error al desactivar usuario');
+      toast.error(result.error || 'No se pudo desactivar el usuario. Inténtalo nuevamente.');
     }
     setLoading(null);
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('¿Estás seguro de eliminar permanentemente este usuario?')) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar permanentemente este usuario? Esta acción no se puede deshacer.')) return;
 
     setLoading(userId);
     const result = await deleteUserAction(userId);
 
     if (result.success) {
-      alert('Usuario eliminado exitosamente');
+      toast.success('¡Usuario eliminado exitosamente!');
       onRefresh();
     } else {
-      alert(result.error || 'Error al eliminar usuario');
+      toast.error(result.error || 'No se pudo eliminar el usuario. Inténtalo nuevamente.');
     }
     setLoading(null);
   };

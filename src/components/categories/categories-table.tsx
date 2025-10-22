@@ -31,10 +31,10 @@ export function CategoriesTable({ categories, onEdit, onRefresh }: CategoriesTab
     const result = await deleteCategoryAction(categoryId);
 
     if (result.success) {
-      toast.success('Categoría eliminada exitosamente');
+      toast.success('¡Categoría eliminada exitosamente!');
       onRefresh();
     } else {
-      toast.error(result.error || 'Error al eliminar categoría');
+      toast.error(result.error || 'No se pudo eliminar la categoría. Inténtalo nuevamente.');
     }
     setLoading(null);
   };

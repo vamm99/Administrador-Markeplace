@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { User as UserIcon, Mail, Phone, IdCard, Shield, Calendar, Save, Key } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -60,10 +61,10 @@ export default function ProfilePage() {
     const result = await updateProfileAction(user._id, formData);
 
     if (result.success) {
-      alert('Perfil actualizado exitosamente');
+      toast.success('¡Perfil actualizado exitosamente!');
       loadUserData();
     } else {
-      alert(result.error || 'Error al actualizar perfil');
+      toast.error(result.error || 'No se pudo actualizar el perfil. Inténtalo nuevamente.');
     }
     setSaving(false);
   };
@@ -73,12 +74,12 @@ export default function ProfilePage() {
     if (!user) return;
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      toast.error('Las contraseñas no coinciden. Por favor verifica e inténtalo nuevamente.');
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
+      toast.error('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
@@ -90,7 +91,7 @@ export default function ProfilePage() {
     );
 
     if (result.success) {
-      alert('Contraseña actualizada exitosamente');
+      toast.success('¡Contraseña actualizada exitosamente!');
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -98,7 +99,7 @@ export default function ProfilePage() {
       });
       setShowPasswordForm(false);
     } else {
-      alert(result.error || 'Error al cambiar contraseña');
+      toast.error(result.error || 'No se pudo cambiar la contraseña. Verifica tu contraseña actual e inténtalo nuevamente.');
     }
     setSaving(false);
   };

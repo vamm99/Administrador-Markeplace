@@ -33,10 +33,10 @@ export function SalesTable({ sales, onViewDetails, onRefresh }: SalesTableProps)
     const result = await updateSaleStatusAction(saleId, 'completed');
 
     if (result.success) {
-      toast.success('Venta marcada como completada');
+      toast.success('¡Venta marcada como completada exitosamente!');
       onRefresh();
     } else {
-      toast.error(result.error || 'Error al actualizar estado');
+      toast.error(result.error || 'No se pudo actualizar el estado de la venta. Inténtalo nuevamente.');
     }
     setLoading(null);
   };

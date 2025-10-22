@@ -107,26 +107,26 @@ export function ProductForm({ product, open, onClose, onSuccess }: ProductFormPr
         const result = await updateProductAction(product._id, updateData);
 
         if (result.success) {
-          toast.success('Producto actualizado exitosamente');
+          toast.success('¡Producto actualizado exitosamente!');
           onSuccess();
           onClose();
         } else {
-          toast.error(result.error || 'Error al actualizar producto');
+          toast.error(result.error || 'No se pudo actualizar el producto. Inténtalo nuevamente.');
         }
       } else {
         // Crear producto
         const result = await createProductAction(formData);
 
         if (result.success) {
-          toast.success('Producto creado exitosamente');
+          toast.success('¡Producto creado exitosamente!');
           onSuccess();
           onClose();
         } else {
-          toast.error(result.error || 'Error al crear producto');
+          toast.error(result.error || 'No se pudo crear el producto. Inténtalo nuevamente.');
         }
       }
     } catch (error) {
-      toast.error('Error inesperado');
+      toast.error('Error inesperado. Por favor intenta de nuevo.');
       console.error(error);
     } finally {
       setLoading(false);

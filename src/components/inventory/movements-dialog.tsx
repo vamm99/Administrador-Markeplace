@@ -49,7 +49,7 @@ export function MovementsDialog({ item, open, onClose }: MovementsDialogProps) {
       setMovements(result.data.data || []);
       setTotalPages(result.data.meta?.totalPages || 1);
     } else {
-      toast.error(result.error || 'Error al cargar movimientos');
+      toast.error(result.error || 'No se pudieron cargar los movimientos. Inténtalo nuevamente.');
     }
     setLoading(false);
   };

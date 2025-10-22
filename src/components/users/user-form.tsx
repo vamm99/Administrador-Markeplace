@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { createUserAction, updateUserAction } from '@/app/actions/users';
+import { toast } from 'sonner';
 
 interface UserFormProps {
   user?: User | null;
@@ -87,26 +88,26 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
         const result = await updateUserAction(user._id, updateData);
 
         if (result.success) {
-          alert('Usuario actualizado exitosamente');
+          toast.success('¡Usuario actualizado exitosamente!');
           onSuccess();
           onClose();
         } else {
-          alert(result.error || 'Error al actualizar usuario');
+          toast.error(result.error || 'No se pudo actualizar el usuario. Inténtalo nuevamente.');
         }
       } else {
         // Crear usuario
         const result = await createUserAction(formData);
 
         if (result.success) {
-          alert('Usuario creado exitosamente');
+          toast.success('¡Usuario creado exitosamente!');
           onSuccess();
           onClose();
         } else {
-          alert(result.error || 'Error al crear usuario');
+          toast.error(result.error || 'No se pudo crear el usuario. Inténtalo nuevamente.');
         }
       }
     } catch (error) {
-      alert('Error inesperado');
+      toast.error('Error inesperado. Por favor intenta de nuevo.');
       console.error(error);
     } finally {
       setLoading(false);

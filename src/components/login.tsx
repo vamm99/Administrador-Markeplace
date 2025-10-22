@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginAction } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 export function Login() {
   const router = useRouter();
@@ -32,19 +33,20 @@ export function Login() {
       const result = await loginAction({ email, password });
 
       if (result.success) {
+        toast.success("¡Bienvenido al panel de administración!");
         // Redirigir al dashboard
         router.push("/home");
         router.refresh();
       } else {
         // Mostrar error
-        if (result.error === 'Error 401 en la API: Invalid credentials') {
-          setError('Credenciales inválidas');
+        if (result.error?.includes('401') || result.error?.includes('Invalid credentials')) {
+          toast.error('Credenciales inválidas. Por favor verifica tu email y contraseña.');
         } else {
-          setError(result.error!);
+          toast.error(result.error || 'Error al iniciar sesión. Intenta nuevamente.');
         }
       }
     } catch (err) {
-      setError("Error inesperado. Intenta de nuevo.");
+      toast.error("Error inesperado. Por favor intenta de nuevo.");
     } finally {
       setIsLoading(false);
     }

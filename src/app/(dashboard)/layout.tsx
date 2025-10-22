@@ -1,7 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { MainHeader } from "@/components/main-header"
-import { Toaster } from "@/components/ui/sonner"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,7 +10,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <MainHeader />
         {children}
       </main>
-      <Toaster />
     </SidebarProvider>
   )
 }

@@ -75,7 +75,10 @@ export function ProductForm({ product, open, onClose, onSuccess }: ProductFormPr
         stock: product.stock,
         discount: product.discount,
         status: product.status,
-        category_id: product.category_id,
+        // Asegúrate de que category_id sea un string
+        category_id: typeof product.category_id === 'object' 
+        ? product.category_id._id 
+        : product.category_id,
       });
     } else {
       // Reset form

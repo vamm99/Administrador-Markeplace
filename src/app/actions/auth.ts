@@ -42,7 +42,6 @@ export async function loginAction(
       data: response,
     };
   } catch (error) {
-    console.error('Error en login:', error);
     
     return {
       success: false,
@@ -71,7 +70,6 @@ export async function registerAction(
       data: response,
     };
   } catch (error) {
-    console.error('Error en registro:', error);
     
     return {
       success: false,

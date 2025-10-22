@@ -37,11 +37,14 @@ export function Login() {
         router.refresh();
       } else {
         // Mostrar error
-        setError(result.error || "Error al iniciar sesión");
+        if (result.error === 'Error 401 en la API: Invalid credentials') {
+          setError('Credenciales inválidas');
+        } else {
+          setError(result.error!);
+        }
       }
     } catch (err) {
       setError("Error inesperado. Intenta de nuevo.");
-      console.error("Error en login:", err);
     } finally {
       setIsLoading(false);
     }

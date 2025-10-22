@@ -7,9 +7,11 @@ import { DollarSign, ShoppingCart, CheckCircle, Clock, TrendingUp } from 'lucide
 
 export default function Home() {
   const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    completed: 0,
+    totalSales: 0,
+    statusCounts: {
+      pending: 0,
+      completed: 0,
+    },
     totalRevenue: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ export default function Home() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-2xl font-bold">{stats.totalSales}</div>
               <p className="text-xs text-muted-foreground">
                 Ventas registradas
               </p>
@@ -90,10 +92,10 @@ export default function Home() {
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.completed}</div>
+              <div className="text-2xl font-bold">{stats.statusCounts.completed}</div>
               <p className="text-xs text-muted-foreground">
-                {stats.total > 0
-                  ? `${((stats.completed / stats.total) * 100).toFixed(1)}% del total`
+                {stats.totalSales > 0
+                  ? `${((stats.statusCounts.completed / stats.totalSales) * 100).toFixed(1)}% del total`
                   : 'Sin ventas'}
               </p>
             </CardContent>
@@ -107,10 +109,10 @@ export default function Home() {
               <Clock className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
+              <div className="text-2xl font-bold">{stats.statusCounts.pending}</div>
               <p className="text-xs text-muted-foreground">
-                {stats.total > 0
-                  ? `${((stats.pending / stats.total) * 100).toFixed(1)}% del total`
+                {stats.totalSales > 0
+                  ? `${((stats.statusCounts.pending / stats.totalSales) * 100).toFixed(1)}% del total`
                   : 'Sin ventas'}
               </p>
             </CardContent>
@@ -128,23 +130,23 @@ export default function Home() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Tasa de Completación</span>
               <span className="font-semibold">
-                {stats.total > 0
-                  ? `${((stats.completed / stats.total) * 100).toFixed(1)}%`
+                {stats.totalSales > 0
+                  ? `${((stats.statusCounts.completed / stats.totalSales) * 100).toFixed(1)}%`
                   : '0%'}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Promedio por Venta</span>
               <span className="font-semibold">
-                {stats.total > 0
-                  ? formatPrice(stats.totalRevenue / stats.total)
+                {stats.totalSales > 0
+                  ? formatPrice(stats.totalRevenue / stats.totalSales)
                   : formatPrice(0)}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Estado</span>
               <span className="font-semibold text-green-600">
-                {stats.pending === 0 ? 'Todas completadas' : `${stats.pending} pendientes`}
+                {stats.statusCounts.pending === 0 ? 'Todas completadas' : `${stats.statusCounts.pending} pendientes`}
               </span>
             </div>
           </CardContent>

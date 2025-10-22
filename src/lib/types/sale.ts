@@ -48,9 +48,12 @@ export interface SaleResponse extends ApiResponse<Sale> {
 }
 
 export interface SalesStats {
-  total: number;
+  totalSales: number;
   pending: number;
-  completed: number;
+  statusCounts: {
+    pending: number;
+    completed: number;
+  };
   totalRevenue: number;
 }
 

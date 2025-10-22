@@ -16,9 +16,10 @@ export interface Product {
   stock: number;
   discount: number;
   status: boolean;
-  category_id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  category_id: string | { _id: string; name: string }; // Ajusta según tu modelo
+  user_id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateProductData {

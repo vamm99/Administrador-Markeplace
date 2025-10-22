@@ -219,7 +219,7 @@ export async function toggleProductStatusAction(
     }
 
     const response = await apiPut<ProductResponse>(
-      `/product/${productId}`,
+      `/product/${productId}/status`,
       { status },
       token
     );

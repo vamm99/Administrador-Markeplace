@@ -62,24 +62,24 @@ export default function SalesPage() {
     const result = await getSalesAction(page, 10, memoizedFilters);
 
     if (result.success && result.data) {
-      setSales(result.data.data || []);
+      const salesData = result.data.data || [];
+      setSales(salesData);
       setTotalPages(result.data.meta?.totalPages || 1);
       setTotal(result.data.meta?.total || 0);
 
-      // Calcular estadísticas
-      const allSales = result.data.data || [];
+      // Calcular estadísticas con los datos de la página actual
+      // (por ahora, luego optimizaremos para todas las ventas)
       setStats({
-        total: allSales.length,
-        pending: allSales.filter((s) => s.status === 'pending').length,
-        completed: allSales.filter((s) => s.status === 'completed').length,
-        totalRevenue: allSales.reduce((sum, s) => sum + s.total, 0),
+        total: salesData.length,
+        pending: salesData.filter((s) => s.status === 'pending').length,
+        completed: salesData.filter((s) => s.status === 'completed').length,
+        totalRevenue: salesData.reduce((sum, s) => sum + (s.total || 0), 0),
       });
     } else {
       toast.error(result.error || 'Error al cargar ventas');
     }
     setLoading(false);
   }, [page, memoizedFilters]);
-
   useEffect(() => {
     loadSales();
   }, [loadSales]);
@@ -87,48 +87,99 @@ export default function SalesPage() {
   const handleExport = async () => {
     setExporting(true);
     try {
+      // console.log('Iniciando exportación con filtros:', filters);
+      
       const result = await getSalesForExportAction(
         filters.startDate,
         filters.endDate
       );
-
+  
+      // console.log('Resultado de exportación:', result);
+  
       if (result.success && result.data) {
         const salesData = result.data.data || [];
-
-        // Preparar datos para Excel
-        const excelData = salesData.map((sale) => ({
-          Fecha: new Date(sale.createdAt).toLocaleDateString('es-ES'),
-          Hora: new Date(sale.createdAt).toLocaleTimeString('es-ES'),
-          'Cantidad de Productos': sale.products && Array.isArray(sale.products) ? sale.products.length : 0,
-          'Unidades Totales': sale.products && Array.isArray(sale.products)
-            ? sale.products.reduce(
-                (sum, p) => sum + (p.quantity || 0),
-                0
-              )
-            : 0,
-          Total: sale.total,
-          Estado: sale.status === 'completed' ? 'Completada' : 'Pendiente',
-        }));
-
+        
+        // console.log('Datos de ventas a exportar:', salesData);
+  
+        if (salesData.length === 0) {
+          toast.warning('No hay ventas para exportar con los filtros seleccionados');
+          setExporting(false);
+          return;
+        }
+  
+        // Preparar datos para Excel con mejor formato
+        const excelData = salesData.flatMap((sale:any) => {
+          // Si la venta no tiene productos, crear una fila básica
+          if (!sale.products || !Array.isArray(sale.products) || sale.products.length === 0) {
+            return [{
+              'N° Orden': sale.orderNumber || 'N/A',
+              'Fecha': new Date(sale.createdAt).toLocaleDateString('es-ES'),
+              'Hora': new Date(sale.createdAt).toLocaleTimeString('es-ES'),
+              'Producto': 'Sin productos',
+              'Precio Unit.': 0,
+              'Cantidad': 0,
+              'Subtotal': 0,
+              'Total Venta': sale.total || 0,
+              'Estado': sale.status === 'completed' ? 'Completada' : 
+                       sale.status === 'pending' ? 'Pendiente' : 
+                       sale.status === 'cancelled' ? 'Cancelada' : 'Otro',
+            }];
+          }
+  
+          // Crear una fila por cada producto
+          return sale.products.map((product:any, index:any) => ({
+            'N° Orden': index === 0 ? sale.orderNumber || 'N/A' : '', // Solo en la primera fila
+            'Fecha': index === 0 ? new Date(sale.createdAt).toLocaleDateString('es-ES') : '',
+            'Hora': index === 0 ? new Date(sale.createdAt).toLocaleTimeString('es-ES') : '',
+            'Producto': product.name || 'Sin nombre',
+            'Precio Unit.': product.price || 0,
+            'Cantidad': product.quantity || 0,
+            'Subtotal': (product.price || 0) * (product.quantity || 0),
+            'Total Venta': index === 0 ? (sale.total || 0) : '', // Solo en la primera fila
+            'Estado': index === 0 ? (
+              sale.status === 'completed' ? 'Completada' : 
+              sale.status === 'pending' ? 'Pendiente' : 
+              sale.status === 'cancelled' ? 'Cancelada' : 'Otro'
+            ) : '',
+          }));
+        });
+  
+        // console.log('Datos formateados para Excel:', excelData);
+  
         // Crear libro de Excel
         const ws = XLSX.utils.json_to_sheet(excelData);
+        
+        // Ajustar ancho de columnas
+        const colWidths = [
+          { wch: 15 }, // N° Orden
+          { wch: 12 }, // Fecha
+          { wch: 10 }, // Hora
+          { wch: 30 }, // Producto
+          { wch: 12 }, // Precio Unit.
+          { wch: 10 }, // Cantidad
+          { wch: 12 }, // Subtotal
+          { wch: 15 }, // Total Venta
+          { wch: 12 }, // Estado
+        ];
+        ws['!cols'] = colWidths;
+  
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
-
+  
+        // Generar nombre de archivo
+        const startDateStr = filters.startDate || 'todas';
+        const endDateStr = filters.endDate || 'hasta_hoy';
+        const fileName = `ventas_${startDateStr}_${endDateStr}.xlsx`;
+        
         // Descargar archivo
-        const fileName = `ventas_${
-          filters.startDate || 'todas'
-        }_${
-          filters.endDate || 'hasta_hoy'
-        }.xlsx`;
         XLSX.writeFile(wb, fileName);
-
-        toast.success('Archivo Excel descargado exitosamente');
+  
+        toast.success(`Archivo Excel descargado: ${excelData.length} filas exportadas`);
       } else {
         toast.error(result.error || 'Error al exportar ventas');
       }
     } catch (error) {
-      console.error('Error al exportar:', error);
+      // console.error('Error al exportar:', error);
       toast.error('Error al generar archivo Excel');
     } finally {
       setExporting(false);

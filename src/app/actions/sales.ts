@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { apiGet, apiPost, apiPut } from '@/lib/api/client';
-import { getSession } from '@/lib/auth/session';
+import { getSession, getUserData } from '@/lib/auth/session';
 import { ActionResult } from '@/lib/types/api';
 import {
   Sale,
@@ -40,7 +40,7 @@ export async function getSalesAction(
     if (filters?.endDate) params.append('endDate', filters.endDate);
 
     const response = await apiGet<SalesListResponse>(
-      `/sales?${params.toString()}`,
+      `/sales/user?${params.toString()}`,
       token
     );
 
@@ -71,7 +71,6 @@ export async function getSalesStatsAction(): Promise<ActionResult<SalesStatsResp
     }
 
     const response = await apiGet<SalesStatsResponse>('/sales/stats', token);
-
     return {
       success: true,
       data: response,
@@ -190,34 +189,50 @@ export async function updateSaleStatusAction(
 export async function getSalesForExportAction(
   startDate?: string,
   endDate?: string
-): Promise<ActionResult<SalesListResponse>> {
+) {
   try {
-    const token = await getSession();
-    if (!token) {
-      return {
-        success: false,
-        error: 'No autenticado',
-      };
+    const [token, user] = await Promise.all([
+      getSession(),
+      getUserData()
+    ]);
+    
+    if (!token || !user?._id) {
+      return { success: false, error: 'No autenticado' };
     }
 
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
 
-    const response = await apiGet<SalesListResponse>(
-      `/sales/export?${params.toString()}`,
-      token
-    );
+    const queryString = params.toString();
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/sales/export${queryString ? `?${queryString}` : ''}`;
 
-    return {
-      success: true,
-      data: response,
-    };
+    // console.log('Llamando a:', url);
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // console.error('Error en la respuesta:', errorText);
+      return { 
+        success: false, 
+        error: `Error del servidor: ${response.status} - ${errorText}` 
+      };
+    }
+
+    const data = await response.json();
+    // console.log('Datos recibidos de la API:', data);
+
+    return { success: true, data };
   } catch (error) {
-    console.error('Error al obtener ventas para exportar:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error al obtener ventas',
+    // console.error('Error en getSalesForExportAction:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Error desconocido' 
     };
   }
 }

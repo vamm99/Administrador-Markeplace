@@ -35,7 +35,6 @@ export function MainHeader() {
   };
 
   const handleLogout = async () => {
-    if (confirm('¿Estás seguro de cerrar sesión?')) {
       setLoading(true);
       try {
         await logoutAction();
@@ -44,7 +43,6 @@ export function MainHeader() {
         console.error('Error al cerrar sesión:', error);
         setLoading(false);
       }
-    }
   };
 
   const getInitials = (name?: string, lastName?: string) => {

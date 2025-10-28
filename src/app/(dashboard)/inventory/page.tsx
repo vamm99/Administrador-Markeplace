@@ -75,7 +75,9 @@ export default function InventoryPage() {
         // Preparar datos de Kardex (Movimientos)
         const kardexExcelData = kardexData.map((item) => ({
           Producto: item.product.name,
-          Categoría: item.product.category_id,
+          Categoría: typeof item.product.category_id === 'string'
+            ? item.product.category_id
+            : item.product.category_id?.name || 'Sin categoría',
           Fecha: new Date(item.createdAt).toLocaleDateString('es-ES'),
           Hora: new Date(item.createdAt).toLocaleTimeString('es-ES'),
           Comentario: item.kardex.comment,
@@ -86,7 +88,9 @@ export default function InventoryPage() {
         // Preparar datos de Inventario (Stock Actual)
         const inventoryExcelData = inventory.map((item) => ({
           Producto: item.product.name,
-          Categoría: item.product.category_id,
+          Categoría: typeof item.product.category_id === 'string'
+            ? item.product.category_id
+            : item.product.category_id?.name || 'Sin categoría',
           'Stock Actual': item.currentStock,
           Estado:
             item.currentStock === 0

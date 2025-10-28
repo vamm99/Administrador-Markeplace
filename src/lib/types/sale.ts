@@ -4,9 +4,16 @@ import { Product } from './product';
 export type SaleStatus = 'pending' | 'completed';
 
 export interface ProductItem {
-  product_id: Product | string;
+  product_id: Product | string | {
+    _id: string;
+    name: string;
+    price: number;
+    image_url?: string;
+  };
+  name: string;
   price: number;
   quantity: number;
+  image_url?: string;
 }
 
 export interface Sale {
@@ -14,6 +21,9 @@ export interface Sale {
   products: ProductItem[];
   total: number;
   status: SaleStatus;
+  orderNumber?: string;
+  payment_id?: string;
+  user_id?: string;
   createdAt: Date;
   updatedAt: Date;
 }

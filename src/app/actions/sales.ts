@@ -24,6 +24,7 @@ export async function getSalesAction(
   try {
     const token = await getSession();
     if (!token) {
+      console.error('[getSalesAction] No hay token de autenticación');
       return {
         success: false,
         error: 'No autenticado',
@@ -39,17 +40,21 @@ export async function getSalesAction(
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
 
+    console.log('[getSalesAction] Llamando a API:', `/sales/user?${params.toString()}`);
+    
     const response = await apiGet<SalesListResponse>(
       `/sales/user?${params.toString()}`,
       token
     );
+
+    console.log('[getSalesAction] Respuesta de API:', response);
 
     return {
       success: true,
       data: response,
     };
   } catch (error) {
-    console.error('Error al obtener ventas:', error);
+    console.error('[getSalesAction] Error al obtener ventas:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al obtener ventas',

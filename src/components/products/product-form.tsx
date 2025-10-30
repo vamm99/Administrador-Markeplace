@@ -257,8 +257,8 @@ export function ProductForm({ product, open, onClose, onSuccess }: ProductFormPr
                 type="number"
                 min="0"
                 max="100"
-                value={formData.discount || ''}
-                onChange={(e) => setFormData({ ...formData, discount: e.target.value ? parseFloat(e.target.value) : 0 })}
+                value={formData.discount ?? ''}
+                onChange={(e) => setFormData({ ...formData, discount: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 required
                 disabled={loading}
                 placeholder="0"
